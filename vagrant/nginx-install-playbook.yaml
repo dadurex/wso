@@ -1,0 +1,15 @@
+- hosts: webapp
+
+  become: true
+  tasks: 
+    - name: Install nginx
+      apt:
+        update_cache: yes
+        name: nginx
+        state: present
+
+    - name: Start nginx
+      service: 
+        name: nginx
+        state: started
+        enabled: true

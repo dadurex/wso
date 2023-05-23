@@ -1,0 +1,24 @@
+- name: Configure firewalld
+  hosts: webapp
+  become: true
+  tasks:
+    - name: Add firewalld rule to allow HTTP traffic
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Add firewalld rule to allow SSH traffic
+      firewalld:
+        port: 22/tcp
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Add firewalld rule to block all other traffic
+      firewalld:
+        zone: drop
+        permanent: true
+        state: enabled
+        immediate: true

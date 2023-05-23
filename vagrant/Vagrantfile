@@ -1,0 +1,39 @@
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "generic/ubuntu2004"
+  # config.vm.provision "shell", inline: "echo \"nameserver 8.8.8.8\" | sudo tee /etc/resolv.conf"
+  
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "firewalld-install-playbook.yaml"
+    ansible.playbook = "nginx-install-playbook.yaml"
+  end
+
+  # Define the webapp virtual machine in the DMZ network
+  config.vm.define "webapp" do |webapp|
+    webapp.vm.network :private_network, :libvirt__network_name => "dmz", :ip => "192.168.1.10"
+    webapp.vm.hostname = "webapp"
+    webapp.vm.provider :libvirt do |libvirt|
+      libvirt.management_network_name = "default"
+    end
+  end
+
+  # Define the internal virtual machine in the intranet network
+  config.vm.define "internal" do |internal|
+    internal.vm.network :private_network, :libvirt__network_name => "intranet", :ip => "192.168.2.10"
+    internal.vm.hostname = "internal"
+    internal.vm.provider :libvirt do |libvirt|
+      libvirt.management_network_name = "default"
+    end
+  end
+
+  # Define the jumper virtual machine in both networks
+  config.vm.define "jumper" do |jumper|
+    jumper.vm.network :private_network, :libvirt__network_name => "dmz", :ip => "192.168.1.20"
+    jumper.vm.network :private_network, :libvirt__network_name => "intranet", :ip => "192.168.2.20"
+    jumper.vm.hostname = "jumper"
+    jumper.vm.provider :libvirt do |libvirt|
+      libvirt.management_network_name = "default"
+    end
+  end
+
+end

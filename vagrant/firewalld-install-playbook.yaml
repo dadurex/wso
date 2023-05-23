@@ -1,0 +1,25 @@
+- hosts: all
+
+  become: true
+  tasks:
+    - name: Update repositories
+      package:
+        name: nginx
+        state: present
+
+    - name: Install firewalld
+      package:
+        name: firewalld
+        state: present
+
+    - name: Enable and start firewalld service
+      service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Stop and disable ufw
+      service:
+        name: ufw
+        state: stopped
+        enabled: false
