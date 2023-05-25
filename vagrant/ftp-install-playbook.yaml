@@ -1,0 +1,21 @@
+- name: Install and start FTP server
+  hosts: internal
+  become: true
+  tasks:
+    - name: Install vsftpd package
+      apt:
+        update_cache: yes
+        name: vsftpd
+        state: present
+
+    - name: Configure vsftpd.conf
+      lineinfile:
+        path: /etc/vsftpd.conf
+        regexp: '^anonymous_enable='
+        line: 'anonymous_enable=YES'
+
+    - name: Start vsftpd service
+      service:
+        name: vsftpd
+        state: restarted
+        enabled: true

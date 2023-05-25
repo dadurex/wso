@@ -1,0 +1,31 @@
+- name: Configure firewalld
+  hosts: webapp
+  become: true
+  tasks:
+    # - name: Allow SSH from a subnet
+    #   firewalld:
+    #     service: ssh
+    #     permanent: yes
+    #     state: enabled
+    #     source: 
+    #     immediate: true
+
+    - name: Add firewalld rule to allow SSH traffic
+      firewalld:
+        port: 22/tcp
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Add firewalld rule to block all other traffic
+      firewalld:
+        zone: drop
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Restart firewalld service
+      service:
+        name: firewalld
+        state: restarted
+        enabled: true

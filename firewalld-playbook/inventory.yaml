@@ -1,0 +1,8 @@
+all:
+  hosts:
+    webapp:
+      ansible_host: 192.168.1.10
+    internal:
+      ansible_host: 192.168.2.10
+    jumper:
+      ansible_host: 192.168.1.20
