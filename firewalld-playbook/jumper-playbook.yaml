@@ -1,31 +1,71 @@
 - name: Configure firewalld
-  hosts: webapp
+  hosts: jumper
   become: true
   tasks:
-    # - name: Allow SSH from a subnet
-    #   firewalld:
-    #     service: ssh
-    #     permanent: yes
-    #     state: enabled
-    #     source: 
-    #     immediate: true
+    - name: Create internal zone
+      firewalld:
+        zone: internal
+        state: present
+        permanent: true
+      notify: Reload firewalld
+
+    - name: Add internal subnet to internal zone
+      firewalld:
+        zone: internal
+        interface: eth2
+        state: enabled
+        permanent: true
+      notify: Reload firewalld
+
+    - name: Create webapp zone
+      firewalld:
+        zone: webapp
+        state: present
+        permanent: true
+      notify: Reload firewalld
+
+    - name: Add webapp subnet to webapp zone
+      firewalld:
+        zone: webapp
+        interface: eth1
+        state: enabled
+        permanent: true
+      notify: Reload firewalld
+
+    - name: Allow webapp to access FTP on internal
+      firewalld:
+        zone: internal
+        service: ftp
+        state: enabled
+        permanent: true
+      notify: Reload firewalld
+
+    - name: Allow webapp to access FTP on internal
+      firewalld:
+        zone: webapp
+        service: ftp
+        state: enabled
+        permanent: true
+      notify: Reload firewalld
 
     - name: Add firewalld rule to allow SSH traffic
       firewalld:
-        port: 22/tcp
+        service: ssh
         permanent: true
         state: enabled
         immediate: true
+      notify: Reload firewalld
 
-    - name: Add firewalld rule to block all other traffic
-      firewalld:
-        zone: drop
-        permanent: true
-        state: enabled
-        immediate: true
+    # - name: Add firewalld rule to block all other traffic
+    #   firewalld:
+    #     zone: drop
+    #     permanent: true
+    #     state: enabled
+    #     immediate: true
+    #   notify: Reload firewalld
 
-    - name: Restart firewalld service
-      service:
+  handlers:
+    - name: Reload firewalld
+      systemd:
         name: firewalld
         state: restarted
-        enabled: true

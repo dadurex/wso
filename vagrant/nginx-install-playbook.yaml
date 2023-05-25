@@ -1,5 +1,5 @@
-- hosts: webapp
-
+- name: Install and start nginx service
+  hosts: webapp
   become: true
   tasks: 
     - name: Install nginx

@@ -4,11 +4,17 @@ Vagrant.configure("2") do |config|
   config.ssh.insert_key = true
   # config.vm.provision "shell", inline: "echo \"nameserver 8.8.8.8\" | sudo tee /etc/resolv.conf"
   
-  config.vm.provision "ansible" do |ansible|
+  config.vm.provision "install firewalld", type:'ansible' do |ansible|
     ansible.playbook = "firewalld-install-playbook.yaml"
-    ansible.playbook = "nginx-install-playbook.yaml"
-    ansible.playbook = "ftp-install-playbook.yaml"
   end
+
+  config.vm.provision "install nginx on webapp", type:'ansible' do |ansible|
+    ansible.playbook = "nginx-install-playbook.yaml"
+  end
+  
+  config.vm.provision "install ftp on internal", type:'ansible' do |ansible|
+    ansible.playbook = "ftp-install-playbook.yaml"
+  end  
 
   # add dadurex's ssh public key to authorized_keys - there is only vagrant user
   config.vm.provision "shell" do |s|
@@ -25,15 +31,10 @@ Vagrant.configure("2") do |config|
     webapp.vm.provider :libvirt do |libvirt|
       libvirt.management_network_name = "default"
     end
-  end
-
-  # Define the internal virtual machine in the intranet network
-  config.vm.define "internal" do |internal|
-    internal.vm.network :private_network, :libvirt__network_name => "intranet", :ip => "192.168.2.10"
-    internal.vm.hostname = "internal"
-    internal.vm.provider :libvirt do |libvirt|
-      libvirt.management_network_name = "default"
-    end
+    webapp.vm.provision "shell", inline: <<-SHELL
+      sudo ip route del default
+      sudo ip route add default via 192.168.1.20
+    SHELL
   end
 
   # Define the jumper virtual machine in both networks
@@ -44,6 +45,33 @@ Vagrant.configure("2") do |config|
     jumper.vm.provider :libvirt do |libvirt|
       libvirt.management_network_name = "default"
     end
+
+    jumper.vm.provision "shell", inline: <<-SHELL
+      sudo sed -i '/net.ipv4.ip_forward/s/^#//' /etc/sysctl.conf
+      sudo sysctl -p
+      sudo iptables -A FORWARD -i eth1 -o eth2 -j ACCEPT
+      sudo iptables -A FORWARD -i eth2 -o eth1 -j ACCEPT
+      sudo iptables -A FORWARD -i  eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+      sudo iptables -A FORWARD -i  eth0 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+      sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+      sudo iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+      sudo iptables -t nat -A POSTROUTING -o eth2 -j MASQUERADE
+    SHELL
+  end
+
+  # Define the internal virtual machine in the intranet network
+  config.vm.define "internal" do |internal|
+    internal.vm.network :private_network, :libvirt__network_name => "intranet", :ip => "192.168.2.10"
+    internal.vm.hostname = "internal"
+    internal.vm.provider :libvirt do |libvirt|
+      libvirt.management_network_name = "default"
+    end
+    internal.vm.provision "shell", inline: <<-SHELL
+      sudo ip route del default
+      sudo ip route add default via 192.168.2.20
+    SHELL
   end
 
 end

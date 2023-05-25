@@ -1,21 +1,23 @@
-- hosts: all
-
+- name: Install and start firewalld service
+  hosts: jumper
   become: true
   tasks:
-    - name: Update repositories
-      package:
-        name: nginx
+    - name: Install firewalld
+      apt:
+        update_cache: yes
+        name: firewalld
         state: present
 
-    - name: Install firewalld
-      package:
-        name: firewalld
+    - name: Install python3-firewall
+      apt:
+        update_cache: yes
+        name: python3-firewall
         state: present
 
     - name: Enable and start firewalld service
       service:
         name: firewalld
-        state: started
+        state: restarted
         enabled: true
 
     - name: Stop and disable ufw

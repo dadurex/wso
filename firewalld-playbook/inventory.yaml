@@ -2,7 +2,10 @@ all:
   hosts:
     webapp:
       ansible_host: 192.168.1.10
-    internal:
-      ansible_host: 192.168.2.10
+      ansible_user: vagrant
     jumper:
       ansible_host: 192.168.1.20
+      ansible_user: vagrant
+    internal:
+      ansible_host: 192.168.2.10
+      ansible_user: vagrant
