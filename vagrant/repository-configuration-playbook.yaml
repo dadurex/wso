@@ -12,3 +12,8 @@
       yum:
         name: ftp
         state: present
+
+    - name: Install nmap
+      yum:
+        name: nmap
+        state: present
