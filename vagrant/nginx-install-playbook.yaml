@@ -1,10 +1,9 @@
 - name: Install and start nginx service
   hosts: webapp
   become: true
-  tasks: 
+  tasks:
     - name: Install nginx
-      apt:
-        update_cache: yes
+      yum:
         name: nginx
         state: present
 

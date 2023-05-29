@@ -3,14 +3,13 @@
   become: true
   tasks:
     - name: Install vsftpd package
-      apt:
-        update_cache: yes
+      yum:
         name: vsftpd
         state: present
 
     - name: Configure vsftpd.conf
       lineinfile:
-        path: /etc/vsftpd.conf
+        path: /etc/vsftpd/vsftpd.conf
         regexp: '^anonymous_enable='
         line: 'anonymous_enable=YES'
 

@@ -2,67 +2,78 @@
   hosts: jumper
   become: true
   tasks:
-    - name: Create internal zone
+    - name: Create zone wso
       firewalld:
-        zone: internal
+        zone: wso
         state: present
         permanent: true
       notify: Reload firewalld
 
-    - name: Add internal subnet to internal zone
+    - name: Add interfaces eth1 and eth2 to wso zone
+      shell: |
+        firewall-cmd --permanent --zone=wso --add-interface=eth1
+        firewall-cmd --permanent --zone=wso --add-interface=eth2
+      notify: Reload firewalld
+
+    - name: Add  masquerade to wso zone
       firewalld:
-        zone: internal
-        interface: eth2
+        masquerade: true
         state: enabled
         permanent: true
-      notify: Reload firewalld
+        zone: wso
+      notify: Reload firewalld  
 
-    - name: Create webapp zone
+    - name: Add  masquerade to public zone
       firewalld:
-        zone: webapp
-        state: present
-        permanent: true
-      notify: Reload firewalld
-
-    - name: Add webapp subnet to webapp zone
-      firewalld:
-        zone: webapp
-        interface: eth1
+        masquerade: true
         state: enabled
         permanent: true
-      notify: Reload firewalld
+        zone: public
+      notify: Reload firewalld 
 
-    - name: Allow webapp to access FTP on internal
+    - name: Add ftp services to wso zone
       firewalld:
-        zone: internal
+        zone: wso
         service: ftp
         state: enabled
         permanent: true
-      notify: Reload firewalld
+      notify: Reload firewalld   
 
-    - name: Allow webapp to access FTP on internal
+    - name: Add http services to wso zone
       firewalld:
-        zone: webapp
-        service: ftp
+        zone: wso
+        service: http
         state: enabled
         permanent: true
-      notify: Reload firewalld
+      notify: Reload firewalld   
 
-    - name: Add firewalld rule to allow SSH traffic
+    - name: Add port to public zone
       firewalld:
-        service: ssh
-        permanent: true
+        zone: public
+        port: 8080/tcp
         state: enabled
-        immediate: true
-      notify: Reload firewalld
+        permanent: true
+      notify: Reload firewalld  
 
-    # - name: Add firewalld rule to block all other traffic
-    #   firewalld:
-    #     zone: drop
-    #     permanent: true
-    #     state: enabled
-    #     immediate: true
-    #   notify: Reload firewalld
+    - name: Add port forward to public zone
+      firewalld:
+        zone: public
+        port_forward:
+          - port: 8080
+            proto: tcp
+            toaddr: 192.168.1.10
+            toport: 80
+        state: enabled
+        permanent: true
+      notify: Reload firewalld  
+
+    - name: Drop all not handled in zone public
+      firewalld:
+        zone: public
+        state: enabled
+        target: DROP
+        permanent: true
+      notify: Reload firewalld  
 
   handlers:
     - name: Reload firewalld

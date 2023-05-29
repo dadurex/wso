@@ -1,9 +1,12 @@
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "generic/ubuntu2004"
+  config.vm.box = "centos/8"
   config.ssh.insert_key = true
-  # config.vm.provision "shell", inline: "echo \"nameserver 8.8.8.8\" | sudo tee /etc/resolv.conf"
-  
+ 
+  config.vm.provision "repository configuration", type:'ansible' do |ansible|
+    ansible.playbook = "repository-configuration-playbook.yaml"
+  end
+
   config.vm.provision "install firewalld", type:'ansible' do |ansible|
     ansible.playbook = "firewalld-install-playbook.yaml"
   end
@@ -41,23 +44,16 @@ Vagrant.configure("2") do |config|
   config.vm.define "jumper" do |jumper|
     jumper.vm.network :private_network, :libvirt__network_name => "dmz", :ip => "192.168.1.20"
     jumper.vm.network :private_network, :libvirt__network_name => "intranet", :ip => "192.168.2.20"
+    jumper.vm.network :private_network, :libvirt__network_name => "pub", :ip => "192.168.3.20"
     jumper.vm.hostname = "jumper"
     jumper.vm.provider :libvirt do |libvirt|
       libvirt.management_network_name = "default"
     end
 
     jumper.vm.provision "shell", inline: <<-SHELL
-      sudo sed -i '/net.ipv4.ip_forward/s/^#//' /etc/sysctl.conf
+      # required to act as a router
+      sudo echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
       sudo sysctl -p
-      sudo iptables -A FORWARD -i eth1 -o eth2 -j ACCEPT
-      sudo iptables -A FORWARD -i eth2 -o eth1 -j ACCEPT
-      sudo iptables -A FORWARD -i  eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
-      sudo iptables -A FORWARD -i  eth0 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT
-
-      sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-
-      sudo iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
-      sudo iptables -t nat -A POSTROUTING -o eth2 -j MASQUERADE
     SHELL
   end
 
@@ -71,6 +67,19 @@ Vagrant.configure("2") do |config|
     internal.vm.provision "shell", inline: <<-SHELL
       sudo ip route del default
       sudo ip route add default via 192.168.2.20
+    SHELL
+  end
+
+  # Define the internal virtual machine in the intranet network
+  config.vm.define "pub" do |pub|
+    pub.vm.network :private_network, :libvirt__network_name => "pub", :ip => "192.168.3.10"
+    pub.vm.hostname = "pub"
+    pub.vm.provider :libvirt do |libvirt|
+      libvirt.management_network_name = "default"
+    end
+    pub.vm.provision "shell", inline: <<-SHELL
+      sudo ip route del default
+      sudo ip route add default via 192.168.3.20
     SHELL
   end
 
