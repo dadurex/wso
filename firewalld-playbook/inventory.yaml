@@ -3,7 +3,7 @@ all:
     webapp:
       ansible_host: 192.168.1.10
       ansible_user: vagrant
-    jumper:
+    firewall:
       ansible_host: 192.168.1.20
       ansible_user: vagrant
     internal:

@@ -1,5 +1,5 @@
 - name: Install and start firewalld service
-  hosts: jumper
+  hosts: firewall
   become: true
   tasks:
     - name: Install firewalld

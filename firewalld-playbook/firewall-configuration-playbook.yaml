@@ -1,5 +1,5 @@
 - name: Configure firewalld
-  hosts: jumper
+  hosts: firewall
   become: true
   tasks:
     - name: Create zone wso
